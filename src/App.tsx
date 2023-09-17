@@ -31,7 +31,9 @@ export default function App() {
     <div className="container">
       <div className="row justify-content-md-center">
         <div className="col col-lg-6">
-          <h1>Death Roll</h1>
+          <center>
+            <h1 className="m-5">💀 Death Roll 💀</h1>
+          </center>
 
           <div className="mb-3">
             {gameOver ? (
