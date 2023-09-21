@@ -1,27 +1,9 @@
 import { useEffect, useState } from 'react';
 import './index.css'
 
+import LOSER_MESSAGES from './loserMessages'
+
 const STARTING_VALUE = 100;
-const LOSER_MESSAGES = [
-  "You rolled a 1, you loser",
-  "More like death ROLLED! GOTTEM!",
-  "That roll was sus! Are you the Imposter?",
-  "You just got death-ROLLED!",
-  "1? That's not gonna cut it, chief",
-  "Oof, that roll's got me DYING!",
-  "We're gonna need a bigger failboat for that giant 1 you just rolled!",
-  "Oops! All 1s.",
-  "That roll? Delete your account.",
-  "1? I think you dropped this 🫴 L",
-  "Is that your IQ or your roll?",
-  "Oh look, you're number 1 at being the worst!",
-  "The '1' stands for '1 more reason you're not winning.'",
-  "You must have a Ph.D. in Onesology, the study of rolling 1s!",
-  "Oh, you rolled a 1? I almost didn't notice among all your other failures.",
-  "Is this your strategy? Because it's a terrible 1.",
-  "You really nailed that roll! Too bad it was into your own coffin. RIP.",
-  "Some people bring joy wherever they go; you bring 1s.",
-]
 
 export default function App() {
   const [maxValue, setMaxValue] = useState(STARTING_VALUE);
@@ -29,7 +11,7 @@ export default function App() {
   const [tempStartingValue, setTempStartingValue] = useState(startingValue); 
   const [history, setHistory] = useState<string[]>([]);
   const [gameOver, setGameOver] = useState(false);
-  const [loserMessage, setLoserMessage] = useState(LOSER_MESSAGES[0])
+  const [loserMessage, setLoserMessage] = useState(LOSER_MESSAGES[0]);
   // Shhhhhh
   const [blink, setBlink] = useState(false);
 
@@ -99,7 +81,7 @@ export default function App() {
             ) : (
               <div className='flex flex-col gap-4'>
                 {startingValue === maxValue && (
-                  <div className='flex justify-center gap-1'>
+                  <div className='flex justify-center gap-1 p-1'>
                     <input
                       className="form-control starting-value"
                       type="number"
@@ -118,7 +100,7 @@ export default function App() {
                 <button
                   className="btn btn-primary btn-lg w-100 p-4"
                   onClick={rollDice}>
-                  Roll 1 - {maxValue}
+                  {maxValue}
                 </button>
               </div>
             )}
