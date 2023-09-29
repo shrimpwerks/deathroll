@@ -1,121 +1,84 @@
-import { useEffect, useState } from 'react';
-import './index.css'
-
-import LOSER_MESSAGES from './loserMessages'
+import { useState } from 'react';
+import LOSER_MESSAGES from './loserMessages';
+import Header from './Header';
+import History from './History';
+import { Turn, hasGameStarted, isGameOver, nextMaxValue } from './Turn';
 
 const STARTING_VALUE = 100;
 
+function randomNumber(min: number, max: number) {
+  return Math.floor(Math.random() * max) + min;
+}
+
 export default function App() {
-  const [maxValue, setMaxValue] = useState(STARTING_VALUE);
-  const [startingValue, setStartingValue] = useState(STARTING_VALUE)
-  const [tempStartingValue, setTempStartingValue] = useState(startingValue); 
-  const [history, setHistory] = useState<string[]>([]);
-  const [gameOver, setGameOver] = useState(false);
-  const [loserMessage, setLoserMessage] = useState(LOSER_MESSAGES[0]);
-  // Shhhhhh
-  const [blink, setBlink] = useState(false);
+  const [startingValue, setStartingValue] = useState(STARTING_VALUE);
+  const [startingValueError, setStartingValueError] = useState<string | null>(null);
+  const [history, setHistory] = useState<Turn[]>([]);
 
   function resetGame() {
-    setMaxValue(startingValue);
     setHistory([]);
-    setGameOver(false);
   }
 
   function rollDice() {
-    const rand = Math.floor(Math.random() * maxValue) + 1;
-
-    setMaxValue(rand);
-    setHistory([...history, `Rolled ${rand} (out of ${maxValue})`]);
-
-    if (rand === 1) {
-      setGameOver(true);
-    }
+    const maxValue = hasGameStarted(history) ? nextMaxValue(history) : startingValue;
+    const rand = randomNumber(1, maxValue);
+    setHistory(history => [...history, { roll: rand, maxRoll: maxValue }]);
   }
 
-  const handleStartingValueChange = () => {
-    setStartingValue(tempStartingValue);
-    setMaxValue(tempStartingValue);
-  };
-
-  const handleSecretBlinkClick = () => {
-    setBlink(gameOver ? !blink : blink)
-  }
-
-  useEffect(() => {
-    if (gameOver) {
-      setLoserMessage(LOSER_MESSAGES[Math.floor(Math.random() * LOSER_MESSAGES.length)])
+  function onStartingValueChange(e: React.FocusEvent<HTMLElement>) {
+    const n = Number(e.currentTarget.innerText);
+    if (!Number.isNaN(n)) {
+      setStartingValue(n);
+      setStartingValueError(null);
+    } else {
+      setStartingValueError("Invalid starting value");
     }
-  }, [gameOver])
+  }
 
   return (
     <div className="container">
       <div className="row justify-content-md-center">
         <div className="col col-lg-6 layout">
-          <div className='flex justify-center'>
-              <div>
-                <h1 
-                  onClick={handleSecretBlinkClick}
-                  className={`m-5 flex gap-1 ${blink && gameOver ? 'blink' : ''}`} 
-                >
-                  <span className={gameOver ? 'spinning' : ''}>💀 </span>
-                  Death Roll
-                  <span className={gameOver ? 'spinning reverse' : ''}>💀 </span>
-                </h1>
+          <Header spin={isGameOver(history)} />
+
+          {isGameOver(history) && (
+            <div className="mb-3">
+              <div className="alert alert-danger loser" role="alert">
+                <span>{LOSER_MESSAGES[randomNumber(0, LOSER_MESSAGES.length)]}</span>
               </div>
+            </div>
+          )}
+
+          <div className="m-5 d-flex justify-content-center">
+            <h1
+              inputMode='numeric'
+              contentEditable={!hasGameStarted(history)}
+              onBlur={e => onStartingValueChange(e)}
+              suppressContentEditableWarning={true}
+            >
+              {hasGameStarted(history) ? nextMaxValue(history) : startingValue}
+            </h1>
           </div>
 
           <div className="mb-3">
-            {gameOver ? (
-              <>
-                <div className="alert alert-danger loser" role="alert">
-                  <span>{loserMessage}</span>
-                </div>
-
-                <button
-                  className="btn btn-danger btn-lg w-100 p-4"
-                  onClick={resetGame}
-                >
-                  Reset Game
-                </button>
-              </>
+            {isGameOver(history) ? (
+              <button
+                className="btn btn-danger btn-lg w-100 p-4"
+                onClick={resetGame}
+              >
+                Reset Game
+              </button>
             ) : (
-              <div className='flex flex-col gap-4'>
-                {startingValue === maxValue && (
-                  <div className='flex justify-center gap-1 p-1'>
-                    <input
-                      className="form-control starting-value"
-                      type="number"
-                      value={tempStartingValue}
-                      onChange={e => setTempStartingValue(e.target.valueAsNumber)}
-                    />
-                    <button
-                      onClick={handleStartingValueChange}
-                      type="button"
-                      className="btn btn-outline-secondary"
-                    >
-                      Update
-                    </button>
-                  </div>
-                )}
-                <button
-                  className="btn btn-primary btn-lg w-100 p-4"
-                  onClick={rollDice}>
-                  {maxValue}
-                </button>
-              </div>
+              <button
+                className="btn btn-primary btn-lg w-100 p-4"
+                onClick={rollDice}
+                disabled={startingValueError !== null}>
+                {startingValueError ? startingValueError : "Roll!"}
+              </button>
             )}
           </div>
 
-          <div className="card">
-            <div className="card-body">
-              <h5 className="card-title mb-0">History</h5>
-            </div>
-            <ul className="list-group list-group-flush">
-              {history.map((roll, i) =>
-                <li className="list-group-item" key={i}>{roll}</li>
-              )}
-            </ul>
-          </div>
+          <History history={history} />
         </div>
       </div>
     </div>
