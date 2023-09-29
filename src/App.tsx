@@ -22,11 +22,11 @@ export default function App() {
   function rollDice() {
     const maxValue = hasGameStarted(history) ? nextMaxValue(history) : startingValue;
     const rand = randomNumber(1, maxValue);
-    setHistory([...history, { roll: rand, maxRoll: maxValue }]);
+    setHistory(history => [...history, { roll: rand, maxRoll: maxValue }]);
   }
 
-  function onStartingValueChange(e: any) {
-    const n = Number(e.target.innerText);
+  function onStartingValueChange(e: React.FocusEvent<HTMLElement>) {
+    const n = Number(e.currentTarget.innerText);
     if (!Number.isNaN(n)) {
       setStartingValue(n);
       setStartingValueError(null);
