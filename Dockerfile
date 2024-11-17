@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM --platform=$BUILDPLATFORM node:20-alpine AS builder
 
 WORKDIR /app
 COPY . .
@@ -6,7 +6,7 @@ COPY . .
 RUN npm install
 RUN npm run build
 
-FROM nginx:alpine
+FROM --platform=$BUILDPLATFORM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 80
