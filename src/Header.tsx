@@ -1,4 +1,4 @@
-import { keyframes, styled } from "styled-components";
+import { css, keyframes, styled } from "styled-components";
 
 const rotate = keyframes`
   from { 
@@ -8,6 +8,23 @@ const rotate = keyframes`
   to { 
     transform: rotate(360deg); 
   }
+`;
+
+// Two quick beats then a rest, like an actual heart that is not doing well.
+const heartbeat = keyframes`
+  0%, 100% { transform: scale(1); color: inherit; }
+  14% { transform: scale(1.12); color: #dc3545; }
+  28% { transform: scale(1); color: inherit; }
+  42% { transform: scale(1.12); color: #dc3545; }
+  70% { transform: scale(1); color: inherit; }
+`;
+
+const Title = styled.h1<{ $panic: boolean }>`
+  ${({ $panic }) =>
+    $panic &&
+    css`
+      animation: ${heartbeat} 1s ease-in-out infinite;
+    `}
 `;
 
 interface SpinProps {
@@ -54,14 +71,15 @@ function Emojis({ items, spin }: { items: EmojiConfig[]; spin: boolean }) {
 
 interface HeaderProps {
   spin: boolean;
+  panic: boolean;
 }
 
-export default function Header({ spin }: HeaderProps) {
+export default function Header({ spin, panic }: HeaderProps) {
   return (
-    <h1 className={`m-4 d-flex justify-content-center gap-3`}>
+    <Title $panic={panic} className={`m-4 d-flex justify-content-center gap-3`}>
       <Emojis items={LEFT} spin={spin} />
       Death Roll
       <Emojis items={RIGHT} spin={spin} />
-    </h1>
+    </Title>
   );
 }
