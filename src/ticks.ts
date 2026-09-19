@@ -12,7 +12,7 @@ export interface Tick {
   variant: TickVariant;
 }
 
-const WORDS = ['NICE', 'uh oh', '69', '∞', 'NaN', 'error', 'undefined', '???', 'no', 'lol'];
+const WORDS = ['NICE', 'uh oh', '69', '∞', 'NaN', '???', 'no', 'lol'];
 const EMOJI = ['💀', '🎲', '🤡', '🫠', '😬', '🙏', '💩', '🔥', '👀', '🫡', '🪦', '🤞'];
 // Kept rare and to a few fonts. Every tick in a new face reads as broken, not funny.
 const FONTS: TickVariant[] = ['comic', 'impact', 'mono'];
