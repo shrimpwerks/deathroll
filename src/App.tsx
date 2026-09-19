@@ -31,6 +31,18 @@ const RollValue = styled.h1<{ $variant: TickVariant }>`
   ${({ $variant }) => VARIANT_STYLES[$variant]}
 `;
 
+// Always reserves two lines, even when empty, so the roll button never shifts.
+// Loser messages can wrap on narrow screens; callouts fit on one.
+const Callout = styled.p<{ $visible: boolean; $tone: "warning" | "danger" }>`
+  min-height: 3rem;
+  margin: 0.5rem 0 0;
+  text-align: center;
+  font-weight: 700;
+  color: ${({ $tone }) => `var(--bs-${$tone})`};
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  transition: opacity 150ms ease-in;
+`;
+
 // Any roll that loses more than 90% of the max shakes the screen.
 const SHAKE_THRESHOLD = 0.9;
 const MAX_SHAKE_PX = 40;
@@ -81,11 +93,13 @@ export default function App() {
 
   const latestIndex = history.length - 1;
   const latestTurn = latestIndex >= 0 ? history[latestIndex] : null;
-  const latestCallout =
-    latestTurn && !slot.rolling ? callout(latestTurn, previousTurnBy(history, latestIndex)) : null;
+  const gameOver = isGameOver(history);
+  const message = gameOver
+    ? LOSER_MESSAGES[randomNumber(0, LOSER_MESSAGES.length)]
+    : latestTurn && !slot.rolling ? callout(latestTurn, previousTurnBy(history, latestIndex)) : null;
 
   const currentMax = hasGameStarted(history) ? nextMaxValue(history) : startingValue;
-  const panic = hasGameStarted(history) && !isGameOver(history) && currentMax < PANIC_BELOW;
+  const panic = hasGameStarted(history) && !gameOver && currentMax < PANIC_BELOW;
 
   function displayTick(): Tick {
     if (slot.rolling && slot.display !== null) {
@@ -112,25 +126,9 @@ export default function App() {
       <div className="container">
         <div className="row justify-content-md-center">
           <div className="col col-lg-6 layout">
-            <Header spin={isGameOver(history)} panic={panic} />
+            <Header spin={gameOver} panic={panic} />
 
-            {isGameOver(history) && (
-              <div className="mb-3">
-                <div className="alert alert-danger loser" role="alert">
-                  <span>{LOSER_MESSAGES[randomNumber(0, LOSER_MESSAGES.length)]}</span>
-                </div>
-              </div>
-            )}
-
-            {latestCallout && !isGameOver(history) && (
-              <div className="mb-3">
-                <div className="alert alert-warning text-center fw-bold" role="alert">
-                  {latestCallout}
-                </div>
-              </div>
-            )}
-
-            <div className="m-5 d-flex justify-content-center">
+            <div className="m-5 d-flex flex-column align-items-center">
               <RollValue
                 $variant={displayTick().variant}
                 inputMode='numeric'
@@ -140,10 +138,17 @@ export default function App() {
               >
                 {displayTick().text}
               </RollValue>
+              <Callout
+                $visible={message !== null}
+                $tone={gameOver ? "danger" : "warning"}
+                aria-live="polite"
+              >
+                {message ?? ""}
+              </Callout>
             </div>
 
             <div className="mb-3">
-              {isGameOver(history) ? (
+              {gameOver ? (
                 <button
                   className="btn btn-danger btn-lg w-100 p-4"
                   onClick={resetGame}
