@@ -19,6 +19,9 @@ export default function App() {
     setHistory([]);
   }
 
+  const currentPlayer = history.length % 2 === 0 ? 1 : 2;
+  const rollButtonClass = currentPlayer === 1 ? "btn-warning" : "btn-info";
+
   function rollDice() {
     const maxValue = hasGameStarted(history) ? nextMaxValue(history) : startingValue;
     const rand = randomNumber(1, maxValue);
@@ -70,10 +73,10 @@ export default function App() {
               </button>
             ) : (
               <button
-                className="btn btn-primary btn-lg w-100 p-4"
+                className={`btn ${rollButtonClass} btn-lg w-100 p-4`}
                 onClick={rollDice}
                 disabled={startingValueError !== null}>
-                {startingValueError ? startingValueError : "Roll!"}
+                {startingValueError ? startingValueError : `Player ${currentPlayer} Roll!`}
               </button>
             )}
           </div>
