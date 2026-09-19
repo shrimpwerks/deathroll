@@ -1,5 +1,9 @@
 export type Player = 1 | 2;
 
+export function otherPlayer(player: Player): Player {
+    return player === 1 ? 2 : 1;
+}
+
 export interface Turn {
     player: Player;
     roll: number;
@@ -38,6 +42,9 @@ export function dropRatio(turn: Turn): number {
 // Rolling at least this fraction of the max, without hitting it, is a whole lot of nothing.
 const NOTHING_HAPPENED_RATIO = 0.95;
 
+// Losing at least this much of the max in one roll is worth a callout, and a screen shake.
+export const BIG_DROP_RATIO = 0.9;
+
 // `previous` is the same player's last turn, if any.
 export function callout(turn: Turn, previous: Turn | null = null): string | null {
     if (turn.roll === 1) {
@@ -54,6 +61,10 @@ export function callout(turn: Turn, previous: Turn | null = null): string | null
 
     if (turn.roll >= turn.maxRoll * NOTHING_HAPPENED_RATIO) {
         return "Bold move. Nothing happened.";
+    }
+
+    if (dropRatio(turn) >= BIG_DROP_RATIO) {
+        return `Dropped ${Math.round(dropRatio(turn) * 100)}%. Ouch.`;
     }
 
     if (turn.roll * 2 === turn.maxRoll) {
