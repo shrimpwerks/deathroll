@@ -10,13 +10,51 @@ const rotate = keyframes`
   }
 `;
 
-const RotateClockwise = styled.div`
-  animation: ${rotate} 2s linear infinite
+interface SpinProps {
+  $duration: number;
+  $reverse?: boolean;
+}
+
+// inline-block so each emoji transforms around its own center
+const Spinner = styled.span<SpinProps>`
+  display: inline-block;
+  animation: ${rotate} ${({ $duration }) => $duration}s linear
+    ${({ $reverse }) => ($reverse ? "reverse" : "normal")} infinite;
 `;
 
-const RotateCounterClockwise = styled.div`
-  animation: ${rotate} 2s linear reverse infinite
-`;
+interface EmojiConfig {
+  emoji: string;
+  duration: number;
+  reverse?: boolean;
+}
+
+const LEFT: EmojiConfig[] = [
+  { emoji: "🍺", duration: 2 },
+  { emoji: "💀", duration: 3, reverse: true },
+  { emoji: "🇩🇪", duration: 2.5 },
+];
+
+const RIGHT: EmojiConfig[] = [
+  { emoji: "🇩🇪", duration: 2.5, reverse: true },
+  { emoji: "💀", duration: 3 },
+  { emoji: "🍺", duration: 2, reverse: true },
+];
+
+function Emojis({ items, spin }: { items: EmojiConfig[]; spin: boolean }) {
+  return (
+    <div>
+      {items.map(({ emoji, duration, reverse }, i) =>
+        spin ? (
+          <Spinner key={i} $duration={duration} $reverse={reverse}>
+            {emoji}
+          </Spinner>
+        ) : (
+          <span key={i}>{emoji}</span>
+        ),
+      )}
+    </div>
+  );
+}
 
 interface HeaderProps {
   spin: boolean;
@@ -25,17 +63,9 @@ interface HeaderProps {
 export default function Header({ spin }: HeaderProps) {
   return (
     <h1 className={`m-4 d-flex justify-content-center gap-3`}>
-      {spin ? (
-        <RotateClockwise>🍺💀</RotateClockwise>
-      ) : (
-        <div>🍺💀</div>
-      )}
+      <Emojis items={LEFT} spin={spin} />
       Death Roll
-      {spin ? (
-        <RotateCounterClockwise>💀🍺</RotateCounterClockwise>
-      ) : (
-        <div>💀🍺</div>
-      )}
+      <Emojis items={RIGHT} spin={spin} />
     </h1>
   );
 }
