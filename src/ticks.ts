@@ -20,11 +20,12 @@ const UPSIDE_DOWN: Record<string, string> = {
   '0': '0', '1': 'Ɩ', '2': 'ᄅ', '3': 'Ɛ', '4': 'ㄣ', '5': 'ϛ', '6': '9', '7': 'ㄥ', '8': '8', '9': '6',
 };
 
-function pick<T>(items: T[]): T {
+export function pick<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
 }
 
-function between(min: number, max: number) {
+// Inclusive on both ends.
+export function between(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
