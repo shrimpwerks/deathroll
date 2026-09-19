@@ -29,15 +29,11 @@ interface EmojiConfig {
 }
 
 const LEFT: EmojiConfig[] = [
-  { emoji: "🍺", duration: 2 },
   { emoji: "💀", duration: 3, reverse: true },
-  { emoji: "🇩🇪", duration: 2.5 },
 ];
 
 const RIGHT: EmojiConfig[] = [
-  { emoji: "🇩🇪", duration: 2.5, reverse: true },
   { emoji: "💀", duration: 3 },
-  { emoji: "🍺", duration: 2, reverse: true },
 ];
 
 function Emojis({ items, spin }: { items: EmojiConfig[]; spin: boolean }) {
