@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { styled } from 'styled-components';
 import LOSER_MESSAGES from './loserMessages';
 import Header from './Header';
 import History from './History';
@@ -7,6 +8,13 @@ import { Player, Turn, callout, dropRatio, hasGameStarted, isGameOver, nextMaxVa
 import { randomNumber, useSlotMachine } from './useSlotMachine';
 
 const STARTING_VALUE = 100;
+
+// Bootstrap's h1 tops out around 2.5rem. The roll is the whole point of the screen, so go big.
+const RollValue = styled.h1`
+  font-size: 7rem;
+  font-weight: 700;
+  line-height: 1;
+`;
 
 // Any roll that loses more than 90% of the max shakes the screen.
 const SHAKE_THRESHOLD = 0.9;
@@ -100,14 +108,14 @@ export default function App() {
             )}
 
             <div className="m-5 d-flex justify-content-center">
-              <h1
+              <RollValue
                 inputMode='numeric'
                 contentEditable={!hasGameStarted(history) && !slot.rolling}
                 onBlur={e => onStartingValueChange(e)}
                 suppressContentEditableWarning={true}
               >
                 {displayValue()}
-              </h1>
+              </RollValue>
             </div>
 
             <div className="mb-3">
