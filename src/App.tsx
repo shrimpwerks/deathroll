@@ -1,19 +1,34 @@
 import { useState } from 'react';
-import { styled } from 'styled-components';
+import { css, styled } from 'styled-components';
 import LOSER_MESSAGES from './loserMessages';
 import Header from './Header';
 import History from './History';
 import Shake from './Shake';
-import { Player, Turn, callout, dropRatio, hasGameStarted, isGameOver, nextMaxValue } from './Turn';
+import { Tick, TickVariant } from './ticks';
+import { Player, Turn, callout, dropRatio, hasGameStarted, isGameOver, nextMaxValue, previousTurnBy } from './Turn';
 import { randomNumber, useSlotMachine } from './useSlotMachine';
 
 const STARTING_VALUE = 100;
 
+// The header starts having a cardiac event once the max drops below this.
+const PANIC_BELOW = 10;
+// At this max there is nothing left to do but pray.
+const PRAY_AT_OR_BELOW = 2;
+
+const VARIANT_STYLES: Record<TickVariant, ReturnType<typeof css>> = {
+  normal: css``,
+  danger: css`color: #dc3545;`,
+  comic: css`font-family: "Comic Sans MS", "Comic Sans", cursive;`,
+  impact: css`font-family: Impact, "Arial Black", sans-serif; letter-spacing: 0.05em;`,
+  mono: css`font-family: "Courier New", monospace;`,
+};
+
 // Bootstrap's h1 tops out around 2.5rem. The roll is the whole point of the screen, so go big.
-const RollValue = styled.h1`
+const RollValue = styled.h1<{ $variant: TickVariant }>`
   font-size: 7rem;
   font-weight: 700;
   line-height: 1;
+  ${({ $variant }) => VARIANT_STYLES[$variant]}
 `;
 
 // Any roll that loses more than 90% of the max shakes the screen.
@@ -64,14 +79,19 @@ export default function App() {
     }
   }
 
-  const latestTurn = history.length > 0 ? history[history.length - 1] : null;
-  const latestCallout = latestTurn && !slot.rolling ? callout(latestTurn) : null;
+  const latestIndex = history.length - 1;
+  const latestTurn = latestIndex >= 0 ? history[latestIndex] : null;
+  const latestCallout =
+    latestTurn && !slot.rolling ? callout(latestTurn, previousTurnBy(history, latestIndex)) : null;
 
-  function displayValue(): number {
+  const currentMax = hasGameStarted(history) ? nextMaxValue(history) : startingValue;
+  const panic = hasGameStarted(history) && !isGameOver(history) && currentMax < PANIC_BELOW;
+
+  function displayTick(): Tick {
     if (slot.rolling && slot.display !== null) {
       return slot.display;
     }
-    return hasGameStarted(history) ? nextMaxValue(history) : startingValue;
+    return { text: String(currentMax), variant: 'normal' };
   }
 
   function rollButtonLabel(): string {
@@ -81,6 +101,9 @@ export default function App() {
     if (slot.rolling) {
       return "Rolling...";
     }
+    if (hasGameStarted(history) && currentMax <= PRAY_AT_OR_BELOW) {
+      return "Pray.";
+    }
     return `Player ${currentPlayer} Roll!`;
   }
 
@@ -89,7 +112,7 @@ export default function App() {
       <div className="container">
         <div className="row justify-content-md-center">
           <div className="col col-lg-6 layout">
-            <Header spin={isGameOver(history)} />
+            <Header spin={isGameOver(history)} panic={panic} />
 
             {isGameOver(history) && (
               <div className="mb-3">
@@ -109,12 +132,13 @@ export default function App() {
 
             <div className="m-5 d-flex justify-content-center">
               <RollValue
+                $variant={displayTick().variant}
                 inputMode='numeric'
                 contentEditable={!hasGameStarted(history) && !slot.rolling}
                 onBlur={e => onStartingValueChange(e)}
                 suppressContentEditableWarning={true}
               >
-                {displayValue()}
+                {displayTick().text}
               </RollValue>
             </div>
 

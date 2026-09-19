@@ -35,7 +35,11 @@ export function dropRatio(turn: Turn): number {
     return 1 - turn.roll / turn.maxRoll;
 }
 
-export function callout(turn: Turn): string | null {
+// Rolling at least this fraction of the max, without hitting it, is a whole lot of nothing.
+const NOTHING_HAPPENED_RATIO = 0.95;
+
+// `previous` is the same player's last turn, if any.
+export function callout(turn: Turn, previous: Turn | null = null): string | null {
     if (turn.roll === 1) {
         return null; // the loser messages handle this one
     }
@@ -48,5 +52,28 @@ export function callout(turn: Turn): string | null {
         return "Zero progress. Coward.";
     }
 
+    if (turn.roll >= turn.maxRoll * NOTHING_HAPPENED_RATIO) {
+        return "Bold move. Nothing happened.";
+    }
+
+    if (turn.roll * 2 === turn.maxRoll) {
+        return "Perfectly balanced.";
+    }
+
+    if (previous && previous.roll === turn.roll) {
+        return "Déjà roll.";
+    }
+
+    return null;
+}
+
+// The turn this player took before `index`, if any.
+export function previousTurnBy(rounds: Turn[], index: number): Turn | null {
+    const player = rounds[index].player;
+    for (let i = index - 1; i >= 0; i--) {
+        if (rounds[i].player === player) {
+            return rounds[i];
+        }
+    }
     return null;
 }
