@@ -2,7 +2,7 @@ import { useState } from 'react';
 import LOSER_MESSAGES from './loserMessages';
 import Header from './Header';
 import History from './History';
-import { Turn, hasGameStarted, isGameOver, nextMaxValue } from './Turn';
+import { Player, Turn, hasGameStarted, isGameOver, nextMaxValue } from './Turn';
 
 const STARTING_VALUE = 100;
 
@@ -19,13 +19,13 @@ export default function App() {
     setHistory([]);
   }
 
-  const currentPlayer = history.length % 2 === 0 ? 1 : 2;
+  const currentPlayer: Player = history.length % 2 === 0 ? 1 : 2;
   const rollButtonClass = currentPlayer === 1 ? "btn-warning" : "btn-info";
 
   function rollDice() {
     const maxValue = hasGameStarted(history) ? nextMaxValue(history) : startingValue;
     const rand = randomNumber(1, maxValue);
-    setHistory(history => [...history, { roll: rand, maxRoll: maxValue }]);
+    setHistory(history => [...history, { player: currentPlayer, roll: rand, maxRoll: maxValue }]);
   }
 
   function onStartingValueChange(e: React.FocusEvent<HTMLElement>) {

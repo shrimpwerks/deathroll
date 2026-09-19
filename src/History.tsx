@@ -13,6 +13,9 @@ export default function History({ history }: HistoryProps) {
             <ul className="list-group list-group-flush">
                 {history.map((round, i) =>
                     <li className="list-group-item" key={i}>
+                        <span className={`badge me-2 ${round.player === 1 ? "text-bg-warning" : "text-bg-info"}`}>
+                            Player {round.player}
+                        </span>
                         Rolled {round.roll} (out of {round.maxRoll})
                     </li>
                 )}
