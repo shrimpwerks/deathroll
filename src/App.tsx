@@ -16,6 +16,17 @@ const RollValue = styled.h1`
   line-height: 1;
 `;
 
+// Always takes up its line, even when empty, so the roll button never shifts.
+const Callout = styled.p<{ $visible: boolean }>`
+  min-height: 1.5rem;
+  margin: 0.5rem 0 0;
+  text-align: center;
+  font-weight: 700;
+  color: var(--bs-warning);
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  transition: opacity 150ms ease-in;
+`;
+
 // Any roll that loses more than 90% of the max shakes the screen.
 const SHAKE_THRESHOLD = 0.9;
 const MAX_SHAKE_PX = 40;
@@ -66,6 +77,7 @@ export default function App() {
 
   const latestTurn = history.length > 0 ? history[history.length - 1] : null;
   const latestCallout = latestTurn && !slot.rolling ? callout(latestTurn) : null;
+  const showCallout = latestCallout !== null && !isGameOver(history);
 
   function displayValue(): number {
     if (slot.rolling && slot.display !== null) {
@@ -99,15 +111,7 @@ export default function App() {
               </div>
             )}
 
-            {latestCallout && !isGameOver(history) && (
-              <div className="mb-3">
-                <div className="alert alert-warning text-center fw-bold" role="alert">
-                  {latestCallout}
-                </div>
-              </div>
-            )}
-
-            <div className="m-5 d-flex justify-content-center">
+            <div className="m-5 d-flex flex-column align-items-center">
               <RollValue
                 inputMode='numeric'
                 contentEditable={!hasGameStarted(history) && !slot.rolling}
@@ -116,6 +120,9 @@ export default function App() {
               >
                 {displayValue()}
               </RollValue>
+              <Callout $visible={showCallout} aria-live="polite">
+                {latestCallout ?? ""}
+              </Callout>
             </div>
 
             <div className="mb-3">
