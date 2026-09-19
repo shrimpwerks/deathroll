@@ -3,7 +3,7 @@ import LOSER_MESSAGES from './loserMessages';
 import Header from './Header';
 import History from './History';
 import Shake from './Shake';
-import { Player, Turn, callout, dropRatio, hasGameStarted, isGameOver, nextMaxValue } from './Turn';
+import { Player, Turn, dropRatio, hasGameStarted, isGameOver, nextMaxValue, noteFor } from './Turn';
 import { randomNumber, useSlotMachine } from './useSlotMachine';
 
 const STARTING_VALUE = 100;
@@ -31,7 +31,8 @@ export default function App() {
   const rollButtonClass = currentPlayer === 1 ? "btn-warning" : "btn-info";
 
   const slot = useSlotMachine((roll, maxRoll) => {
-    const turn: Turn = { player: currentPlayer, roll, maxRoll };
+    const matchedPrevious = hasGameStarted(history) && roll === maxRoll;
+    const turn: Turn = { player: currentPlayer, roll, maxRoll, note: noteFor(roll, maxRoll, matchedPrevious) };
     setHistory(history => [...history, turn]);
     setShakePx(shakeAmplitude(turn));
   });
@@ -57,7 +58,7 @@ export default function App() {
   }
 
   const latestTurn = history.length > 0 ? history[history.length - 1] : null;
-  const latestCallout = latestTurn && !slot.rolling ? callout(latestTurn) : null;
+  const latestNote = latestTurn && !slot.rolling ? latestTurn.note : null;
 
   function displayValue(): number {
     if (slot.rolling && slot.display !== null) {
@@ -91,15 +92,7 @@ export default function App() {
               </div>
             )}
 
-            {latestCallout && !isGameOver(history) && (
-              <div className="mb-3">
-                <div className="alert alert-warning text-center fw-bold" role="alert">
-                  {latestCallout}
-                </div>
-              </div>
-            )}
-
-            <div className="m-5 d-flex justify-content-center">
+            <div className="my-5 d-flex justify-content-center position-relative">
               <h1
                 inputMode='numeric'
                 contentEditable={!hasGameStarted(history) && !slot.rolling}
@@ -108,6 +101,15 @@ export default function App() {
               >
                 {displayValue()}
               </h1>
+              {/* Sits in the h1's bottom margin so it never pushes the button down */}
+              {latestNote && (
+                <div
+                  className="position-absolute top-100 start-50 translate-middle-x w-100 small text-center text-danger fw-bold fst-italic"
+                  role="status"
+                >
+                  {latestNote}
+                </div>
+              )}
             </div>
 
             <div className="mb-3">

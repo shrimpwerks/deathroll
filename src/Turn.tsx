@@ -1,9 +1,13 @@
+import CHEAT_MESSAGES from './cheatMessages';
+
 export type Player = 1 | 2;
 
 export interface Turn {
     player: Player;
     roll: number;
     maxRoll: number;
+    // Commentary on the roll, decided once when it lands.
+    note: string | null;
 };
 
 export function nextMaxValue(rounds: Turn[]): number {
@@ -35,17 +39,19 @@ export function dropRatio(turn: Turn): number {
     return 1 - turn.roll / turn.maxRoll;
 }
 
-export function callout(turn: Turn): string | null {
-    if (turn.roll === 1) {
+// `matchedPrevious` is true when the roll equals the previous player's roll.
+// The first turn has no previous roll, so rolling the starting value doesn't count.
+export function noteFor(roll: number, maxRoll: number, matchedPrevious: boolean): string | null {
+    if (roll === 1) {
         return null; // the loser messages handle this one
     }
 
-    if (turn.roll === 2) {
+    if (roll === 2) {
         return "One away from death.";
     }
 
-    if (turn.roll === turn.maxRoll) {
-        return "Zero progress. Coward.";
+    if (matchedPrevious) {
+        return CHEAT_MESSAGES[Math.floor(Math.random() * CHEAT_MESSAGES.length)];
     }
 
     return null;
