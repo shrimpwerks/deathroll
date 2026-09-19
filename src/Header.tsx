@@ -26,15 +26,15 @@ export default function Header({ spin }: HeaderProps) {
   return (
     <h1 className={`m-4 d-flex justify-content-center gap-3`}>
       {spin ? (
-        <RotateClockwise>💀</RotateClockwise>
+        <RotateClockwise>🍺💀</RotateClockwise>
       ) : (
-        <div>💀</div>
+        <div>🍺💀</div>
       )}
       Death Roll
       {spin ? (
-        <RotateCounterClockwise>💀</RotateCounterClockwise>
+        <RotateCounterClockwise>💀🍺</RotateCounterClockwise>
       ) : (
-        <div>💀</div>
+        <div>💀🍺</div>
       )}
     </h1>
   );
