@@ -16,13 +16,14 @@ const RollValue = styled.h1`
   line-height: 1;
 `;
 
-// Always takes up its line, even when empty, so the roll button never shifts.
-const Callout = styled.p<{ $visible: boolean }>`
-  min-height: 1.5rem;
+// Always reserves two lines, even when empty, so the roll button never shifts.
+// Loser messages can wrap on narrow screens; callouts fit on one.
+const Callout = styled.p<{ $visible: boolean; $tone: "warning" | "danger" }>`
+  min-height: 3rem;
   margin: 0.5rem 0 0;
   text-align: center;
   font-weight: 700;
-  color: var(--bs-warning);
+  color: ${({ $tone }) => `var(--bs-${$tone})`};
   opacity: ${({ $visible }) => ($visible ? 1 : 0)};
   transition: opacity 150ms ease-in;
 `;
@@ -76,8 +77,10 @@ export default function App() {
   }
 
   const latestTurn = history.length > 0 ? history[history.length - 1] : null;
-  const latestCallout = latestTurn && !slot.rolling ? callout(latestTurn) : null;
-  const showCallout = latestCallout !== null && !isGameOver(history);
+  const gameOver = isGameOver(history);
+  const message = gameOver
+    ? LOSER_MESSAGES[randomNumber(0, LOSER_MESSAGES.length)]
+    : latestTurn && !slot.rolling ? callout(latestTurn) : null;
 
   function displayValue(): number {
     if (slot.rolling && slot.display !== null) {
@@ -101,15 +104,7 @@ export default function App() {
       <div className="container">
         <div className="row justify-content-md-center">
           <div className="col col-lg-6 layout">
-            <Header spin={isGameOver(history)} />
-
-            {isGameOver(history) && (
-              <div className="mb-3">
-                <div className="alert alert-danger loser" role="alert">
-                  <span>{LOSER_MESSAGES[randomNumber(0, LOSER_MESSAGES.length)]}</span>
-                </div>
-              </div>
-            )}
+            <Header spin={gameOver} />
 
             <div className="m-5 d-flex flex-column align-items-center">
               <RollValue
@@ -120,13 +115,17 @@ export default function App() {
               >
                 {displayValue()}
               </RollValue>
-              <Callout $visible={showCallout} aria-live="polite">
-                {latestCallout ?? ""}
+              <Callout
+                $visible={message !== null}
+                $tone={gameOver ? "danger" : "warning"}
+                aria-live="polite"
+              >
+                {message ?? ""}
               </Callout>
             </div>
 
             <div className="mb-3">
-              {isGameOver(history) ? (
+              {gameOver ? (
                 <button
                   className="btn btn-danger btn-lg w-100 p-4"
                   onClick={resetGame}
