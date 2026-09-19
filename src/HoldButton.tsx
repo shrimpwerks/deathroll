@@ -49,7 +49,14 @@ interface HoldButtonProps {
   onRelease: (armed: boolean) => void;
 }
 
-export default function HoldButton({ className, holdMs, busy, labels, onHoldStart, onRelease }: HoldButtonProps) {
+export default function HoldButton({
+  className,
+  holdMs,
+  busy,
+  labels,
+  onHoldStart,
+  onRelease,
+}: HoldButtonProps) {
   const [state, setState] = useState<HoldState>('idle');
 
   function begin() {
@@ -103,9 +110,9 @@ export default function HoldButton({ className, holdMs, busy, labels, onHoldStar
       className={className}
       $armed={state === 'armed'}
       disabled={busy && state === 'idle'}
-      onPointerDown={e => e.button === 0 && begin()}
-      onContextMenu={e => e.preventDefault()}
-      onKeyDown={e => {
+      onPointerDown={(e) => e.button === 0 && begin()}
+      onContextMenu={(e) => e.preventDefault()}
+      onKeyDown={(e) => {
         if (isHoldKey(e)) {
           e.preventDefault();
           if (!e.repeat) {
@@ -113,7 +120,7 @@ export default function HoldButton({ className, holdMs, busy, labels, onHoldStar
           }
         }
       }}
-      onKeyUp={e => isHoldKey(e) && release()}
+      onKeyUp={(e) => isHoldKey(e) && release()}
     >
       <Fill $active={state !== 'idle'} $holdMs={holdMs} />
       <Label>{label}</Label>

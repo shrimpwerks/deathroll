@@ -17,7 +17,16 @@ const EMOJI = ['💀', '🎲', '🤡', '🫠', '😬', '🙏', '💩', '🔥', '
 // Kept rare and to a few fonts. Every tick in a new face reads as broken, not funny.
 const FONTS: TickVariant[] = ['comic', 'impact', 'mono'];
 const UPSIDE_DOWN: Record<string, string> = {
-  '0': '0', '1': 'Ɩ', '2': 'ᄅ', '3': 'Ɛ', '4': 'ㄣ', '5': 'ϛ', '6': '9', '7': 'ㄥ', '8': '8', '9': '6',
+  '0': '0',
+  '1': 'Ɩ',
+  '2': 'ᄅ',
+  '3': 'Ɛ',
+  '4': 'ㄣ',
+  '5': 'ϛ',
+  '6': '9',
+  '7': 'ㄥ',
+  '8': '8',
+  '9': '6',
 };
 
 export function pick<T>(items: T[]): T {
@@ -31,8 +40,19 @@ export function between(min: number, max: number) {
 
 function toRoman(n: number): string {
   const table: [number, string][] = [
-    [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'],
-    [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
+    [1000, 'M'],
+    [900, 'CM'],
+    [500, 'D'],
+    [400, 'CD'],
+    [100, 'C'],
+    [90, 'XC'],
+    [50, 'L'],
+    [40, 'XL'],
+    [10, 'X'],
+    [9, 'IX'],
+    [5, 'V'],
+    [4, 'IV'],
+    [1, 'I'],
   ];
   let out = '';
   for (const [value, numeral] of table) {
@@ -45,7 +65,11 @@ function toRoman(n: number): string {
 }
 
 function flip(n: number): string {
-  return String(n).split('').reverse().map(d => UPSIDE_DOWN[d] ?? d).join('');
+  return String(n)
+    .split('')
+    .reverse()
+    .map((d) => UPSIDE_DOWN[d] ?? d)
+    .join('');
 }
 
 export function numberTick(n: number): Tick {

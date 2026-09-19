@@ -1,0 +1,50 @@
+/* Design tokens. Bootstrap's semantic colours (warning, info) are not player colours. */
+:root {
+  --player-1: #ffb703;
+  --player-1-ink: #1f1600;
+  --player-2: #4cc9f0;
+  --player-2-ink: #001a24;
+  --font-display: 'Bebas Neue', Impact, 'Arial Black', sans-serif;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+/* Bootstrap 5.3 buttons and badges are themed through CSS variables, so a player button is
+   just a .btn with its palette swapped. */
+.btn-player-1,
+.btn-player-2 {
+  --bs-btn-color: var(--player-ink);
+  --bs-btn-bg: var(--player);
+  --bs-btn-border-color: var(--player);
+  --bs-btn-hover-color: var(--player-ink);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--player), white 12%);
+  --bs-btn-hover-border-color: var(--bs-btn-hover-bg);
+  --bs-btn-active-color: var(--player-ink);
+  --bs-btn-active-bg: color-mix(in srgb, var(--player), black 12%);
+  --bs-btn-active-border-color: var(--bs-btn-active-bg);
+  --bs-btn-disabled-color: var(--player-ink);
+  --bs-btn-disabled-bg: var(--player);
+  --bs-btn-disabled-border-color: var(--player);
+  --bs-btn-focus-shadow-rgb: 255, 255, 255;
+  font-weight: 700;
+}
+
+.btn-player-1,
+.badge-player-1 {
+  --player: var(--player-1);
+  --player-ink: var(--player-1-ink);
+}
+
+.btn-player-2,
+.badge-player-2 {
+  --player: var(--player-2);
+  --player-ink: var(--player-2-ink);
+}
+
+.badge-player-1,
+.badge-player-2 {
+  background: var(--player);
+  color: var(--player-ink);
+}

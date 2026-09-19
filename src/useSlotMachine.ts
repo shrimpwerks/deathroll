@@ -40,9 +40,12 @@ function fastPhase(maxValue: number): Step[] {
   const steps = Array.from({ length: count }, () => ({ delayMs: tickMs, tick: randomTick(maxValue) }));
 
   if (count > 4) {
-    const gag = Math.random() < lerp(NEAR_MISS_CHANCE.safe, NEAR_MISS_CHANCE.deadly, d)
-      ? nearMissTick()
-      : Math.random() < FAKE_MAX_CHANCE ? fakeMaxTick(maxValue) : null;
+    const gag =
+      Math.random() < lerp(NEAR_MISS_CHANCE.safe, NEAR_MISS_CHANCE.deadly, d)
+        ? nearMissTick()
+        : Math.random() < FAKE_MAX_CHANCE
+          ? fakeMaxTick(maxValue)
+          : null;
     if (gag) {
       steps[between(2, count - 3)].tick = gag;
     }

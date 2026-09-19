@@ -8,7 +8,16 @@ import Shake from './Shake';
 import { buzz, deathBuzz } from './haptics';
 import { Tick, TickVariant, pick } from './ticks';
 import {
-  BIG_DROP_RATIO, Player, Turn, callout, dropRatio, hasGameStarted, isGameOver, nextMaxValue, otherPlayer, previousTurnBy,
+  BIG_DROP_RATIO,
+  Player,
+  Turn,
+  callout,
+  dropRatio,
+  hasGameStarted,
+  isGameOver,
+  nextMaxValue,
+  otherPlayer,
+  previousTurnBy,
 } from './Turn';
 import { danger, lerp, useSlotMachine } from './useSlotMachine';
 
@@ -24,12 +33,27 @@ const HOLD_MS = { safe: 700, deadly: 2500 };
 // Shake animation, then the drain and the fall start together.
 const SHAKE_MS = 600;
 
+// How red the background gets at the deadliest max, as a percentage mixed into the body colour.
+const MAX_HEAT_PCT = 45;
+
+type Tone = 'warning' | 'danger' | 'muted';
+
+// The display face is the default. Each other variant is a deliberate departure from it.
 const VARIANT_STYLES: Record<TickVariant, ReturnType<typeof css>> = {
   normal: css``,
-  danger: css`color: #dc3545;`,
-  comic: css`font-family: "Comic Sans MS", "Comic Sans", cursive;`,
-  impact: css`font-family: Impact, "Arial Black", sans-serif; letter-spacing: 0.05em;`,
-  mono: css`font-family: "Courier New", monospace;`,
+  danger: css`
+    color: var(--bs-danger);
+  `,
+  comic: css`
+    font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+  `,
+  impact: css`
+    font-family: Impact, 'Arial Black', sans-serif;
+    letter-spacing: 0.05em;
+  `,
+  mono: css`
+    font-family: 'Courier New', monospace;
+  `,
 };
 
 // Wobbles, then drops off the bottom of the screen.
@@ -46,34 +70,69 @@ const rise = keyframes`
   to { transform: none; opacity: 1; }
 `;
 
-// Bootstrap's h1 tops out around 2.5rem. The roll is the whole point of the screen, so go big.
-const RollValue = styled.h1<{ $variant: TickVariant; $falling: boolean; $fallen: boolean }>`
-  font-size: 7rem;
-  font-weight: 700;
+// The roll is the whole point of the screen, so go big. The display face is condensed, which
+// buys another couple of rem. Tabular figures stop the width jumping between 100, 65 and 7.
+const RollValue = styled.h1<{ $variant: TickVariant; $color: string; $falling: boolean; $fallen: boolean }>`
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 9rem;
+  font-weight: 400;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: ${({ $color }) => $color};
+  transition: color 300ms ease-out;
   ${({ $variant }) => VARIANT_STYLES[$variant]}
-  ${({ $falling }) => $falling && css`animation: ${fall} 1.6s ease-in ${SHAKE_MS}ms forwards;`}
-  ${({ $fallen }) => $fallen && css`animation: ${rise} 0.4s ease-out;`}
+  ${({ $falling }) =>
+    $falling &&
+    css`
+      animation: ${fall} 1.6s ease-in ${SHAKE_MS}ms forwards;
+    `}
+  ${({ $fallen }) =>
+    $fallen &&
+    css`
+      animation: ${rise} 0.4s ease-out;
+    `}
 `;
 
 // Always reserves two lines, even when empty, so the roll button never shifts.
 // Loser messages can wrap on narrow screens; callouts fit on one.
-const Callout = styled.p<{ $visible: boolean; $tone: "warning" | "danger" }>`
+const Callout = styled.p<{ $visible: boolean; $tone: Tone }>`
   min-height: 3rem;
   margin: 0.5rem 0 0;
   text-align: center;
-  font-weight: 700;
-  color: ${({ $tone }) => `var(--bs-${$tone})`};
+  font-weight: ${({ $tone }) => ($tone === 'muted' ? 400 : 700)};
+  color: ${({ $tone }) => ($tone === 'muted' ? 'var(--bs-secondary-color)' : `var(--bs-${$tone})`)};
   opacity: ${({ $visible }) => ($visible ? 1 : 0)};
   transition: opacity 150ms ease-in;
 `;
 
 // The colour drains out of the page once someone dies. Waits for the shake to finish first,
-// and snaps straight back on rematch.
-const Drain = styled.div<{ $dead: boolean }>`
-  min-height: 100vh;
+// and snaps straight back on rematch. Before that, the page warms toward red as death gets close.
+const Drain = styled.div<{ $dead: boolean; $heat: number }>`
+  min-height: 100dvh;
+  background: color-mix(
+    in srgb,
+    var(--bs-body-bg),
+    #8a1020 ${({ $heat }) => Math.round($heat * MAX_HEAT_PCT)}%
+  );
   filter: grayscale(${({ $dead }) => ($dead ? 1 : 0)});
-  transition: ${({ $dead }) => ($dead ? `filter 2s ease-in ${SHAKE_MS}ms` : 'none')};
+  transition: ${({ $dead }) => ($dead ? `filter 2s ease-in ${SHAKE_MS}ms` : 'background 600ms ease-out')};
+`;
+
+// Header up top, roll in the middle, button in reach of a thumb, history trailing off below.
+const Screen = styled.div`
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+`;
+
+const Stage = styled.div`
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
 `;
 
 const MAX_SHAKE_PX = 40;
@@ -91,6 +150,10 @@ function shakeAmplitude(turn: Turn): number {
   return Math.round((excess / (1 - BIG_DROP_RATIO)) * MAX_SHAKE_PX);
 }
 
+function playerColor(player: Player): string {
+  return `var(--player-${player})`;
+}
+
 export default function App() {
   const [startingValue, setStartingValue] = useState(STARTING_VALUE);
   const [startingValueError, setStartingValueError] = useState<string | null>(null);
@@ -103,12 +166,12 @@ export default function App() {
   const [chickenedOut, setChickenedOut] = useState(false);
 
   const currentPlayer: Player = history.length % 2 === 0 ? firstPlayer : otherPlayer(firstPlayer);
-  const rollButtonClass = currentPlayer === 1 ? "btn-warning" : "btn-info";
+  const rollButtonClass = `btn btn-player-${currentPlayer} btn-lg w-100 p-4`;
 
   const slot = useSlotMachine((roll, maxRoll) => {
     const turn: Turn = { player: currentPlayer, roll, maxRoll };
     const px = shakeAmplitude(turn);
-    setHistory(history => [...history, turn]);
+    setHistory((history) => [...history, turn]);
     setShakePx(px);
     if (roll === 1) {
       setLoserMessage(pick(LOSER_MESSAGES));
@@ -120,9 +183,11 @@ export default function App() {
 
   const latestIndex = history.length - 1;
   const latestTurn = latestIndex >= 0 ? history[latestIndex] : null;
+  const started = hasGameStarted(history);
   const gameOver = isGameOver(history);
-  const currentMax = hasGameStarted(history) ? nextMaxValue(history) : startingValue;
-  const inDanger = hasGameStarted(history) && !gameOver && currentMax < DANGER_BELOW;
+  const currentMax = started ? nextMaxValue(history) : startingValue;
+  const inDanger = started && !gameOver && currentMax < DANGER_BELOW;
+  const heat = inDanger ? danger(currentMax) : 0;
 
   // The loser rolls first next time.
   function rematch() {
@@ -161,21 +226,36 @@ export default function App() {
       setStartingValue(n);
       setStartingValueError(null);
     } else {
-      setStartingValueError("Invalid starting value");
+      setStartingValueError('Invalid starting value');
     }
   }
 
-  function message(): string | null {
+  // Nothing has happened yet, so fill the slot with something quiet but useful.
+  function idleMessage(): string {
+    if (!started) {
+      return 'Tap the number to set the stakes.';
+    }
+    if (currentMax <= 1) {
+      return 'Nowhere left to go.';
+    }
+    return `1 in ${currentMax} to die.`;
+  }
+
+  function message(): { text: string; tone: Tone } | null {
     if (gameOver) {
-      return loserMessage;
+      return loserMessage ? { text: loserMessage, tone: 'danger' } : null;
     }
     if (slot.rolling) {
       return null;
     }
     if (chickenedOut) {
-      return "Chickened out.";
+      return { text: 'Chickened out.', tone: 'warning' };
     }
-    return latestTurn ? callout(latestTurn, previousTurnBy(history, latestIndex)) : null;
+    const shout = latestTurn ? callout(latestTurn, previousTurnBy(history, latestIndex)) : null;
+    if (shout) {
+      return { text: shout, tone: 'warning' };
+    }
+    return { text: idleMessage(), tone: 'muted' };
   }
 
   function displayTick(): Tick {
@@ -193,7 +273,7 @@ export default function App() {
       return startingValueError;
     }
     if (slot.rolling) {
-      return "Rolling...";
+      return 'Rolling...';
     }
     return `Player ${currentPlayer} Roll!`;
   }
@@ -201,7 +281,7 @@ export default function App() {
   function rollButton() {
     if (gameOver) {
       return (
-        <button className="btn btn-danger btn-lg w-100 p-4" onClick={rematch}>
+        <button className="btn btn-danger btn-lg w-100 p-4 fw-bold" onClick={rematch}>
           Rematch. Player {latestTurn?.player} rolls first.
         </button>
       );
@@ -210,14 +290,14 @@ export default function App() {
     if (inDanger) {
       return (
         <HoldButton
-          className={`btn ${rollButtonClass} btn-lg w-100 p-4`}
+          className={rollButtonClass}
           holdMs={Math.round(lerp(HOLD_MS.safe, HOLD_MS.deadly, danger(currentMax)))}
           busy={slot.rolling}
           labels={{
-            idle: currentMax <= PRAY_AT_OR_BELOW ? "Hold. Pray." : `Player ${currentPlayer}: hold to roll.`,
+            idle: currentMax <= PRAY_AT_OR_BELOW ? 'Hold. Pray.' : `Player ${currentPlayer}: hold to roll.`,
             holding: "Don't let go...",
-            armed: "Let go.",
-            busy: "Rolling...",
+            armed: 'Let go.',
+            busy: 'Rolling...',
           }}
           onHoldStart={startHolding}
           onRelease={stopHolding}
@@ -227,9 +307,10 @@ export default function App() {
 
     return (
       <button
-        className={`btn ${rollButtonClass} btn-lg w-100 p-4`}
+        className={rollButtonClass}
         onClick={rollDice}
-        disabled={startingValueError !== null || slot.rolling}>
+        disabled={startingValueError !== null || slot.rolling}
+      >
         {rollButtonLabel()}
       </button>
     );
@@ -237,44 +318,45 @@ export default function App() {
 
   const tick = displayTick();
   const text = message();
+  // Whoever is about to roll owns the number. Nonsense ticks and death keep their own colours.
+  const rollColor = tick.variant === 'normal' && !gameOver ? playerColor(currentPlayer) : 'inherit';
 
   return (
-    <Drain $dead={gameOver}>
+    <Drain $dead={gameOver} $heat={heat}>
       <Shake px={shakePx} onDone={() => setShakePx(0)}>
         <div className="container">
           <div className="row justify-content-md-center">
-            <div className="col col-lg-6 layout">
+            <Screen className="col col-lg-6">
               <Header spin={gameOver} panic={inDanger} />
 
-              <div className="m-5 d-flex flex-column align-items-center">
+              <Stage>
                 <RollValue
                   $variant={tick.variant}
+                  $color={rollColor}
                   $falling={gameOver && !fallen}
                   $fallen={fallen}
                   onAnimationEnd={() => gameOver && !fallen && setFallen(true)}
-                  inputMode='numeric'
-                  contentEditable={!hasGameStarted(history) && !slot.rolling}
-                  onBlur={e => onStartingValueChange(e)}
+                  inputMode="numeric"
+                  contentEditable={!started && !slot.rolling}
+                  onBlur={(e) => onStartingValueChange(e)}
                   suppressContentEditableWarning={true}
                 >
                   {tick.text}
                 </RollValue>
-                <Callout
-                  $visible={text !== null}
-                  $tone={gameOver ? "danger" : "warning"}
-                  aria-live="polite"
-                >
-                  {text ?? ""}
+                <Callout $visible={text !== null} $tone={text?.tone ?? 'muted'} aria-live="polite">
+                  {text?.text ?? ''}
                 </Callout>
-              </div>
+              </Stage>
 
               <div className="mb-3">{rollButton()}</div>
 
-              <History history={history} />
-            </div>
+              <div className="pb-4">
+                <History history={history} />
+              </div>
+            </Screen>
           </div>
         </div>
       </Shake>
     </Drain>
   );
-};
+}
